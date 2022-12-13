@@ -1,9 +1,8 @@
 
-import abc
 import exceptions
 from automaton import Automaton
 
-class TM(Automaton, metaclass=abc.ABCMeta):
+class TM(Automaton):
     """An abstract base class for Turing machines."""
 
     def _read_input_symbol_subset(self):

@@ -1,11 +1,11 @@
-import abc
+
 import exceptions
 from frozendict import frozendict
 from utils import freezeValue
 
 should_validate_automata = True
 
-class Automaton(metaclass=abc.ABCMeta):
+class Automaton():
     """An abstract base class for all automata, including Turing machines."""
 
     def __init__(self, **kwargs):
@@ -17,7 +17,6 @@ class Automaton(metaclass=abc.ABCMeta):
         if should_validate_automata:
             self.validate()
 
-    @abc.abstractmethod
     def validate(self):
         """Return True if this automaton is internally consistent."""
         raise NotImplementedError
@@ -30,7 +29,6 @@ class Automaton(metaclass=abc.ABCMeta):
         """Set custom delattr to make class immutable."""
         raise AttributeError(f'This {type(self).__name__} is immutable')
 
-    @abc.abstractmethod
     def read_input_stepwise(self, input_str):
         """Return a generator that yields each step while reading input."""
         raise NotImplementedError

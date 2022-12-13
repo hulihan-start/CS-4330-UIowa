@@ -1,22 +1,24 @@
 import collections
 
 
-class TMTape(collections.namedtuple(
-    'TMTape',
-    ['tape', 'blank_symbol', 'current_position']
-)):
+class TMTape():
     """A Turing machine tape."""
+    def __init__(self, tape, blank_symbol, current_position=0):
+        self.tape = tape
+        self.blank_symbol = blank_symbol
+        self.current_position = current_position
 
-    def __new__(cls, tape, *, blank_symbol, current_position=0):
-        """Initialize a new Turing machine tape."""
-        tape = list(tape)
-        # Make sure that there's something under the cursor.
-        while len(tape) <= current_position:
-            tape.append(blank_symbol)
-        tape = tuple(tape)
-        return super(TMTape, cls).__new__(
-            cls, tape, blank_symbol, current_position
-        )
+
+    # def __new__(cls, tape, *, blank_symbol, current_position=0):
+    #     """Initialize a new Turing machine tape."""
+    #     tape = list(tape)
+    #     # Make sure that there's something under the cursor.
+    #     while len(tape) <= current_position:
+    #         tape.append(blank_symbol)
+    #     tape = tuple(tape)
+    #     return super(TMTape, cls).__new__(
+    #         cls, tape, blank_symbol, current_position
+    #     )
 
     def read_symbol(self):
         """Read the symbol at the current position in the tape."""
@@ -73,6 +75,6 @@ class TMTape(collections.namedtuple(
 
     def __repr__(self):
         """Return a string representation of the tape."""
-        return '{}(\'{}\', {})'.format(
-            self.__class__.__name__, ''.join(self.tape), self.current_position
+        return '{}, {}'.format(
+            ''.join(self.tape), self.current_position
         )

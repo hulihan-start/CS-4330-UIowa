@@ -4,25 +4,20 @@ import exceptions
 from configuration import TMConfiguration
 from tape import TMTape
 
-class NTM(tm.TM):
+class NTM():
     """A nondeterministic Turing machine."""
-
-    __slots__ = ('states', 'input_symbols', 'tape_symbols', 'transitions',
-                 'initial_state', 'blank_symbol', 'final_states')
-
     def __init__(
             self, *, states, input_symbols, tape_symbols, transitions,
             initial_state, blank_symbol, final_states):
         """Initialize a complete Turing machine."""
-        super().__init__(
-            states=states,
-            input_symbols=input_symbols,
-            tape_symbols=tape_symbols,
-            transitions=transitions,
-            initial_state=initial_state,
-            blank_symbol=blank_symbol,
-            final_states=final_states
-        )
+        self.states = states
+        self.input_symbols = input_symbols
+        self.tape_symbols = tape_symbols
+        self.transitions = transitions
+        self.initial_state = initial_state
+        self.blank_symbol = blank_symbol
+        self.final_states = final_states
+        self.validate()
 
     def _validate_transition_state(self, transition_state):
         if transition_state not in self.states:
@@ -76,27 +71,30 @@ class NTM(tm.TM):
                         final_state))
 
     def validate(self):
-        """Return True if this NTM is internally consistent."""
-        self._read_input_symbol_subset()
-        self._validate_blank_symbol()
-        self._validate_transitions()
-        self._validate_initial_state()
-        self._validate_initial_state_transitions()
-        self._validate_nonfinal_initial_state()
-        self._validate_final_states()
+        # """Return True if this NTM is internally consistent."""
+        # self._read_input_symbol_subset()
+        # self._validate_blank_symbol()
+        # self._validate_transitions()
+        # self._validate_initial_state()
+        # self._validate_initial_state_transitions()
+        # self._validate_nonfinal_initial_state()
+        # self._validate_final_states()
         self._validate_final_state_transitions()
         return True
 
     def _get_transitions(self, state, tape_symbol):
         """Get the transition tuples for the given state and tape symbol."""
         if state in self.transitions and tape_symbol in self.transitions[
-            state]:
+            state]:            
+            #print(self.transitions[state][tape_symbol],state,tape_symbol)
             return self.transitions[state][tape_symbol]
+
         else:
             return set()
 
     def _has_accepted(self, configuration):
         """Check whether the given config indicates accepted input."""
+        # print(configuration)
         return configuration.state in self.final_states
 
     def _get_next_configurations(self, old_config):
@@ -110,9 +108,50 @@ class NTM(tm.TM):
             tape = tape.write_symbol(new_tape_symbol)
             tape = tape.move(direction)
             new_configs.add(TMConfiguration(new_state, tape))
+        #print(new_configs)
         return new_configs
 
-    def read_input_stepwise(self, input_str):
+    def read_input(self, input_str):
+        """
+        Check if the given string is accepted by this automaton.
+        Return the automaton's final configuration if this string is valid.
+        """
+        # "Fast-forward" generator to get its final value
+        for config in self.read_input_stepwise(input_str):
+            pass
+        return config
+
+    def read_input_stepwise(self, input_str, count=99999):
+        """
+        Check if the given string is accepted by this Turing machine.
+        Yield the current configurations of the machine at each step.
+        """
+        current_configurations = {
+            TMConfiguration(
+                self.initial_state,
+                TMTape(input_str, blank_symbol=self.blank_symbol))}
+        yield current_configurations
+        c = 1
+        #print(self.initial_state)
+        # The initial state cannot be a final state for a NTM, so the first
+        # iteration is always guaranteed to run (as it should)
+        while current_configurations:
+            new_configurations = set()
+            for config in current_configurations:
+                # print(config.state, config.tape.tape, config.tape.blank_symbol, config.tape.current_position)
+                # config.print()
+                if self._has_accepted(config):
+                    # One accepting configuration is enough.
+                    return
+                new_configurations.update(
+                    self._get_next_configurations(config))
+            current_configurations = new_configurations
+            yield current_configurations
+            c = c + 1
+            if( c == count):
+                break
+
+    def printConfig(self, input_str, count):
         """
         Check if the given string is accepted by this Turing machine.
         Yield the current configurations of the machine at each step.
@@ -123,24 +162,19 @@ class NTM(tm.TM):
                 TMTape(
                     input_str,
                     blank_symbol=self.blank_symbol))}
-        yield current_configurations
-
-        # The initial state cannot be a final state for a NTM, so the first
-        # iteration is always guaranteed to run (as it should)
+        c = 0
         while current_configurations:
             new_configurations = set()
             for config in current_configurations:
                 if self._has_accepted(config):
-                    # One accepting configuration is enough.
                     return
                 new_configurations.update(
                     self._get_next_configurations(config))
+            c = c + 1
             current_configurations = new_configurations
-            yield current_configurations
-
-        raise exceptions.RejectionException(
-            "the NTM did not reach an accepting configuration"
-        )
+            if(c == count):
+                yield current_configurations
+                break
 
 # a = NTM(
 #     states={'q0', 'q1', 'q2'},
@@ -218,10 +252,9 @@ ntm2 = NTM(
     blank_symbol='.',
     final_states={'q6'}
 )
-print(ntm2.read_input('abc'))
-print(ntm2.read_input('aabbcc'))
-print(ntm2.read_input('aaabbbccc'))
-
+#print(ntm2.read_input('abc'))
+#print(ntm2.read_input('aabbcc'))
+#print(ntm2.read_input('aaabbbccc'))
 
 
 ntm3 = NTM(
@@ -258,7 +291,14 @@ ntm3 = NTM(
     final_states={'q5'}
 )
 
-print(ntm3.read_input('ab'))
-print(ntm3.read_input('aabb'))
-print(ntm3.read_input('aaabbb'))
-print(ntm3.read_input('ababb'))
+#print(ntm3.read_input('ab'))
+#print(ntm3.read_input('aabb'))
+print(ntm3.read_input('aaabb'))
+
+#print config
+for configs in ntm2.printConfig("aabbcc",7):
+    print(configs)
+print('*****')
+#print history
+for configs in ntm2.read_input_stepwise("aabbcc",7):
+    print(configs)
